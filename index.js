@@ -38,8 +38,9 @@ const userSchema = new mongoose.Schema({
 app.use(express.json());
 
 const corsOptions = {
-  origin: "*",
+  origin: "*", // or '*' to allow any origin
   methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
 
