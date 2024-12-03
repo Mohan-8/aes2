@@ -48,8 +48,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 // Initialize the bot
 const TelegramBot = require("node-telegram-bot-api");
-// const token = process.env.TOKEN;
-// const bot = new TelegramBot(token, { polling: true });
+const token = process.env.TOKEN;
+const bot = new TelegramBot(token, { polling: true });
 console.log("Telegram Bot is running");
 
 // Connect to MongoDB
@@ -64,7 +64,7 @@ app.get("/", (req, res) => {
     "WORKING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   );
 });
-Telegram bot /start command with referral handling
+// Telegram bot /start command with referral handling
 bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   const referrerId = match[1];
