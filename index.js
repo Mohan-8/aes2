@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema({
   },
   solanaAddress: { type: String },
   solanaClaimed: { type: Boolean, default: false },
+  gameTimers: { type: Date, default: null },
 });
 
 app.use(express.json());
@@ -47,8 +48,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 // Initialize the bot
 const TelegramBot = require("node-telegram-bot-api");
-const token = process.env.TOKEN;
-const bot = new TelegramBot(token, { polling: true });
+// const token = process.env.TOKEN;
+// const bot = new TelegramBot(token, { polling: true });
 console.log("Telegram Bot is running");
 
 // Connect to MongoDB
@@ -64,46 +65,46 @@ app.get("/", (req, res) => {
   );
 });
 // Telegram bot /start command with referral handling
-bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  const referrerId = match[1];
-  const { id, first_name: firstName, last_name: lastName = "" } = msg.from;
+// bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
+//   const chatId = msg.chat.id;
+//   const referrerId = match[1];
+//   const { id, first_name: firstName, last_name: lastName = "" } = msg.from;
 
-  let user = await User.findOne({ telegramId: id });
+//   let user = await User.findOne({ telegramId: id });
 
-  if (!user) {
-    user = new User({ telegramId: id, firstName, lastName });
+//   if (!user) {
+//     user = new User({ telegramId: id, firstName, lastName });
 
-    if (referrerId) {
-      user.referredBy = referrerId;
-      const referrer = await User.findOne({ telegramId: referrerId });
-      if (referrer) {
-        referrer.referralCount += 1;
-        await referrer.save();
-      }
-    }
+//     if (referrerId) {
+//       user.referredBy = referrerId;
+//       const referrer = await User.findOne({ telegramId: referrerId });
+//       if (referrer) {
+//         referrer.referralCount += 1;
+//         await referrer.save();
+//       }
+//     }
 
-    await user.save();
-  }
+//     await user.save();
+//   }
 
-  const inlineKeyboard = {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "Launch",
-            web_app: {
-              url: `https://aelonfs2.vercel.app/?userId=${user.telegramId}`,
-            },
-          },
-        ],
-      ],
-    },
-  };
+//   const inlineKeyboard = {
+//     reply_markup: {
+//       inline_keyboard: [
+//         [
+//           {
+//             text: "Launch",
+//             web_app: {
+//               url: `https://aelonfs2.vercel.app/?userId=${user.telegramId}`,
+//             },
+//           },
+//         ],
+//       ],
+//     },
+//   };
 
-  const welcomeMessage = `Welcome, ${user.firstName}! Click the button below to Launch the Game.`;
-  bot.sendMessage(chatId, welcomeMessage, inlineKeyboard);
-});
+//   const welcomeMessage = `Welcome, ${user.firstName}! Click the button below to Launch the Game.`;
+//   bot.sendMessage(chatId, welcomeMessage, inlineKeyboard);
+// });
 
 app.get("/api/user/:userId", async (req, res) => {
   const { userId } = req.params;
@@ -472,6 +473,72 @@ app.get("/api/user/:userId/solanaInfo", async (req, res) => {
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
+  }
+});
+app.get("/api/user/:userId/game-status", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await User.findOne({ telegramId: userId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const currentTime = new Date();
+    const lastGameTime = user.gameTimers;
+    let canStartGame = true;
+    let remainingTime = 0;
+
+    if (lastGameTime) {
+      const timeElapsed = (currentTime - lastGameTime) / (1000 * 60); // Time elapsed in minutes
+      if (timeElapsed < 60) {
+        canStartGame = false;
+        remainingTime = 60 - timeElapsed;
+      }
+    }
+    res.status(200).json({
+      canStartGame,
+      remainingTime: Math.ceil(remainingTime), // Time remaining in minutes
+    });
+  } catch (error) {
+    console.error("Error fetching game status:", error);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
+  }
+});
+
+app.post("/api/user/:userId/save-score", async (req, res) => {
+  const { score } = req.body;
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).json({ error: "Missing score or userId" });
+  }
+
+  try {
+    const user = await User.findOne({ telegramId: userId });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Update the rewards with the score
+    user.rewards += score;
+
+    // Store the current time (the time when the score is saved)
+    user.gameTimers = new Date(); // Store current time as the game timer
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Score saved and rewards updated",
+      user,
+    });
+  } catch (error) {
+    console.error("Error saving score:", error);
+    res.status(500).json({
+      error: "Failed to save score and update rewards",
+    });
   }
 });
 
