@@ -46,7 +46,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Initialize the bot
+// // Initialize the bot
 const TelegramBot = require("node-telegram-bot-api");
 const token = process.env.TOKEN;
 const bot = new TelegramBot(token, { polling: true });
@@ -489,7 +489,7 @@ app.get("/api/user/:userId/game-status", async (req, res) => {
     let remainingTime = 0;
 
     if (lastGameTime) {
-      const timeElapsed = (currentTime - lastGameTime) / (1000 * 60); // Time elapsed in minutes
+      const timeElapsed = (currentTime - lastGameTime) / 300; // Time elapsed in minutes
       if (timeElapsed < 60) {
         canStartGame = false;
         remainingTime = 60 - timeElapsed;
