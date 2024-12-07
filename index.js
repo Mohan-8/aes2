@@ -94,7 +94,7 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
           {
             text: "Launch",
             web_app: {
-              url: `https://aelonfs2.vercel.app/?userId=${user.telegramId}`,
+              url: `https://aelonnextfront.vercel.app/?userId=${user.telegramId}`,
             },
           },
         ],
