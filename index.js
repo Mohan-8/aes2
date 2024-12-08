@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema({
 app.use(express.json());
 
 const corsOptions = {
-  origin: "*",
+  origin: "*", 
   methods: ["GET", "POST"],
   credentials: true,
 };
