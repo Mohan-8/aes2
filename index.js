@@ -502,7 +502,7 @@ app.get("/api/user/:userId/game-status", async (req, res) => {
       user.gameTimers = null;
       await user.save();
     }
-    console.log(remainingTime);
+    // console.log(remainingTime);
     res.status(200).json({
       canStartGame,
       remainingTime: Math.ceil(remainingTime),
