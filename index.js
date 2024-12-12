@@ -489,7 +489,7 @@ app.get("/api/user/:userId/game-status", async (req, res) => {
 
     if (lastGameTime) {
       const timeElapsed = (currentTime - lastGameTime) / (1000 * 60);
-      const cooldownPeriod = 30;
+      const cooldownPeriod = 60;
 
       if (timeElapsed < cooldownPeriod) {
         canStartGame = false;
