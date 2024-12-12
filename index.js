@@ -488,19 +488,21 @@ app.get("/api/user/:userId/game-status", async (req, res) => {
     let remainingTime = 0;
 
     if (lastGameTime) {
-      const timeElapsed = (currentTime - lastGameTime) / (1000 * 60);
-      const cooldownPeriod = 60;
-
-      if (timeElapsed < cooldownPeriod) {
+      const timeElapsed = (currentTime - new Date(lastGameTime)) / 1000;
+      if (timeElapsed < 60) {
         canStartGame = false;
-        remainingTime = cooldownPeriod - timeElapsed;
+        remainingTime = 60 - timeElapsed;
       } else {
         canStartGame = true;
         user.gameTimers = null;
         await user.save();
       }
+    } else {
+      canStartGame = true;
+      user.gameTimers = null;
+      await user.save();
     }
-
+    console.log(remainingTime);
     res.status(200).json({
       canStartGame,
       remainingTime: Math.ceil(remainingTime),
