@@ -488,15 +488,22 @@ app.get("/api/user/:userId/game-status", async (req, res) => {
     let remainingTime = 0;
 
     if (lastGameTime) {
-      const timeElapsed = (currentTime - lastGameTime) / (1000 * 60); // Time elapsed in minutes
-      if (timeElapsed < 60) {
+      const timeElapsed = (currentTime - lastGameTime) / (1000 * 60);
+      const cooldownPeriod = 30;
+
+      if (timeElapsed < cooldownPeriod) {
         canStartGame = false;
-        remainingTime = 60 - timeElapsed;
+        remainingTime = cooldownPeriod - timeElapsed;
+      } else {
+        canStartGame = true;
+        user.gameTimers = null;
+        await user.save();
       }
     }
+
     res.status(200).json({
       canStartGame,
-      remainingTime: Math.ceil(remainingTime), // Time remaining in minutes
+      remainingTime: Math.ceil(remainingTime),
     });
   } catch (error) {
     console.error("Error fetching game status:", error);
@@ -521,11 +528,8 @@ app.post("/api/user/:userId/save-score", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Update the rewards with the score
     user.rewards += score;
-
-    // Store the current time (the time when the score is saved)
-    user.gameTimers = new Date(); // Store current time as the game timer
+    user.gameTimers = new Date();
 
     await user.save();
 
