@@ -114,7 +114,7 @@ app.get("/api/user/:userId", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    let canClaim = false;
+    let canClaim = user.hasClaimed;
     let streakCount = user.streakCount;
     let lastlogin = user.lastLoginAt;
 
@@ -176,7 +176,7 @@ app.post("/api/user/:userId/claim-tokens", async (req, res) => {
   // Add 28,800 tokens
   user.rewards += 840;
   user.isFarming = false;
-  user.hasClaimed = true;
+  user.hasClaimed = false;
   user.farmingStartTime = null;
   await user.save();
 
@@ -196,15 +196,16 @@ app.get("/api/user/:userId/get-status", async (req, res) => {
     ? Math.floor((new Date() - user.farmingStartTime) / 1000)
     : 0;
   if (timeElapsed >= 8 * 3600) {
-    // If 8 hours have elapsed, set isFarming to false and cap tokens at 28800
     user.isFarming = false;
-    user.timeElapsed = 8 * 3600; // cap at 8 hours
+    user.timeElapsed = 8 * 3600;
+    user.hasClaimed = true;
     await user.save();
   }
 
   res.json({
     tokens: user.rewards,
     farming: user.isFarming,
+    canClaim: user.hasClaimed,
     timeElapsed,
   });
 });
